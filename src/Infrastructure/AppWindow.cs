@@ -316,7 +316,7 @@ window.external = {
 #if DEBUG
                 debug = true,
 #endif
-                address = GetAddress(),
+                address = _host.GetListeningAddress(),
                 token = AppEnvironment.ApiAuthenticationToken,
                 version = AppEnvironment.ApplicationProductVersion,
                 build = AppEnvironment.ApplicationFileVersion,
@@ -347,14 +347,6 @@ window.external = {
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(script));
 
             return stream;
-
-            string GetAddress()
-            {
-                var address = _host.GetListeningAddress(); 
-                var addressString = address.ToString();
-
-                return addressString;
-            }
         }
 
         private void SendAppStartupWebMessage()

@@ -293,33 +293,23 @@
         /// <summary>
         /// Get the listening address used by the Kesterl HTTP server
         /// </summary>
-        /// <remarks>The port binding happens only when IWebHost.Run() is called and it is not accessible on Startup.Configure() because port has not been yet assigned on this stage.</remarks>
-        public static Uri GetListeningAddress(this IServer server)
+        /// <remarks>The port binding happens only when IWebHost.Run() is called and it is not accessible on StartupConfiguration.Configure() because port has not been yet assigned on this stage.</remarks>
+        public static string GetListeningAddress(this IServer server)
         {
-            var feature = server.Features.Get<IServerAddressesFeature>();
-            if (feature is not null)
-            {
-                var uris = feature.Addresses.Select((address) => new Uri(address, UriKind.Absolute)).ToArray();
+            var feature = server.Features.Get<IServerAddressesFeature>() ?? throw new BravoUnexpectedException($"{nameof(IServerAddressesFeature)} not found");
 
-                if (uris.Length == 0) throw new BravoUnexpectedException("No server listening address found");
-                if (uris.Length != 1) throw new BravoUnexpectedException("Multiple server listening addresses found");
-
-                return uris.Single(); // a single address is expected here
-            }
-
-            throw new BravoUnexpectedException("Server listening address not found");
+            BravoUnexpectedException.Assert(feature.Addresses.Count == 1);
+            var address = feature.Addresses.Single();
+            
+            return address;
         }
 
-        public static Uri GetListeningAddress(this IHost host)
+        public static string GetListeningAddress(this IHost host)
         {
-            var server = host.Services.GetService<IServer>();
-            if (server is not null)
-            {
-                var uri = server.GetListeningAddress();
-                return uri;
-            }
+            var server = host.Services.GetRequiredService<IServer>();
+            var address = server.GetListeningAddress();
 
-            throw new BravoUnexpectedException("Host listening address not found");
+            return address;
         }
     }
 }
