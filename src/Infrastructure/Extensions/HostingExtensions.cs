@@ -157,9 +157,9 @@
         {
             services.AddCors((options) =>
             {
-                options.AddDefaultPolicy((policy) =>
+                options.AddDefaultPolicy((builder) =>
                 {
-                    policy.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin();
+                    builder.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin();
                 });
             });
 
