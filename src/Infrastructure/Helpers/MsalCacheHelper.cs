@@ -7,7 +7,7 @@
     using System.IO;
     using System.Security.Cryptography;
 
-    internal static class TokenCacheHelper
+    internal static class MsalCacheHelper
     {
         private static readonly object _tokenCacheLock = new();
 
@@ -28,7 +28,7 @@
                         }
                         catch (CryptographicException ex)
                         {
-                            AppEnvironment.AddDiagnostics(name: $"{nameof(TokenCacheHelper)}.{nameof(BeforeAccessCallback)}", ex, DiagnosticMessageSeverity.Warning);
+                            AppEnvironment.AddDiagnostics(name: $"{nameof(MsalCacheHelper)}.{nameof(BeforeAccessCallback)}", ex, DiagnosticMessageSeverity.Warning);
 
                             // Delete the file in order to force a new authentication
                             File.Delete(AppEnvironment.MsalTokenCacheFilePath);

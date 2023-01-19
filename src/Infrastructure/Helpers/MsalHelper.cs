@@ -21,7 +21,7 @@
 
             // TODO: should we add logging .WithLogging() ??
             var publicClient = PublicClientApplicationBuilder.Create(pbicloudEnvironment.AzureADClientId).WithAuthority(authorityUri).WithRedirectUri(redirectUri).Build();
-            TokenCacheHelper.RegisterCache(publicClient.UserTokenCache);
+            MsalCacheHelper.RegisterCache(publicClient.UserTokenCache);
 
             return publicClient;
         }
@@ -88,11 +88,12 @@
         public static async Task ClearTokenCacheAsync(IPBICloudEnvironment environment)
         {
             var publicClient = CreatePublicClientApplication(environment);
-            var cachedAccounts = (await publicClient.GetAccountsAsync().ConfigureAwait(false)).ToArray();
+            var cachedAccounts = (await publicClient.GetAccountsAsync()).ToArray();
 
-            foreach (var account in cachedAccounts)
+            while (cachedAccounts.Any())
             {
-                await publicClient.RemoveAsync(account).ConfigureAwait(false);
+                await publicClient.RemoveAsync(cachedAccounts.First());
+                cachedAccounts = (await publicClient.GetAccountsAsync()).ToArray();
             }
         }
     }
