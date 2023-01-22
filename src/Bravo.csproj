@@ -17,6 +17,7 @@
     <NoWarn>$(NoWarn);1591</NoWarn>
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <Configurations>$(Configurations);Debug_wwwroot</Configurations>
+    <AnalysisMode>All</AnalysisMode>
     <AnalysisLevel>latest</AnalysisLevel>
     <IncludeOpenAPIAnalyzers>true</IncludeOpenAPIAnalyzers>
     <IsPackable>false</IsPackable>
