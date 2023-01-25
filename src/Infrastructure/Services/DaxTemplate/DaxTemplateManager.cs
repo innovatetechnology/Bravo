@@ -17,7 +17,8 @@
 
     internal class DaxTemplateManager
     {
-        private static bool CacheInitialized = false;
+        private static bool _cacheInitialized = false;
+        private static readonly object _cacheSyncLock = new();
 
         public const string SqlbiTemplateAnnotation = "SQLBI_Template";
         public const string SqlbiTemplateAnnotationDatesValue = "Dates";
@@ -29,12 +30,10 @@
         public const string SqlbiTemplateTableAnnotationHolidaysDefinitionValue = "HolidaysDefinition";
 
         private const string TemplateEmbeddedResourcePrefix = "Sqlbi.Bravo.Assets.ManageDates.Templates.";
-        private const string SchemaEmbeddedResourcePrefix = "Sqlbi.Bravo.Assets.TemplateDevelopment.Schemas.";
+        //private const string SchemaEmbeddedResourcePrefix = "Sqlbi.Bravo.Assets.TemplateDevelopment.Schemas.";
 
         internal static readonly string CachePath = Path.Combine(AppEnvironment.ApplicationTempPath, @"ManageDates\Templates");
         internal static readonly string UserPath = Path.Combine(AppEnvironment.ApplicationDataPath, @"ManageDates\Templates");
-
-        private readonly object _cacheSyncLock = new();
 
         public DaxTemplateManager()
         {
@@ -59,10 +58,8 @@
         {
             if (BravoPolicies.Current.BuiltInTemplatesEnabledPolicy == PolicyStatus.Forced)
             {
-                if (BravoPolicies.Current.BuiltInTemplatesEnabled == false)
-                {
+                if (!BravoPolicies.Current.BuiltInTemplatesEnabled)
                     return Array.Empty<Package>();
-                }
             }
 
             try
@@ -84,9 +81,9 @@
             try
             {
                 var package = configuration.LoadPackage();
-                var modelChanges = GetPreviewChanges(package, previewRows, connection, cancellationToken);
+                var changes = GetPreviewChanges(package, previewRows, connection, cancellationToken);
 
-                return modelChanges;
+                return changes;
             }
             catch (Exception ex) when (ex is TemplateException || ex is AdomdException)
             {
@@ -104,15 +101,15 @@
                 engine.ApplyTemplates(connection.Model, cancellationToken);
                 try
                 {
-                    var modelChanges = Engine.GetModelChanges(connection.Model, cancellationToken);
+                    var changes = Engine.GetModelChanges(connection.Model, cancellationToken);
 
                     if (previewRows > 0)
                     {
                         using var adomdConnection = connection.CreateAdomdConnection();
-                        modelChanges.PopulatePreview(adomdConnection, connection.Model, previewRows, cancellationToken);
+                        changes.PopulatePreview(adomdConnection, connection.Model, previewRows, cancellationToken);
                     }
 
-                    return modelChanges;
+                    return changes;
                 }
                 finally
                 {
@@ -144,44 +141,41 @@
             }
         }
 
-        private IEnumerable<(string Name, Stream Content)> GetSchemaFiles()
+        //private IEnumerable<(string Name, Stream Content)> GetSchemaFiles()
+        //{
+        //    var files = GetResources(prefix: SchemaEmbeddedResourcePrefix);
+        //    return files;
+        //}
+
+        private IEnumerable<(string Name, Stream Content)> GetTemplates()
         {
-            var files = GetResourceFiles(resourcePrefix: SchemaEmbeddedResourcePrefix);
+            var files = GetResources(prefix: TemplateEmbeddedResourcePrefix);
             return files;
         }
 
-        private IEnumerable<(string Name, Stream Content)> GetTemplateFiles()
-        {
-            var files = GetResourceFiles(resourcePrefix: TemplateEmbeddedResourcePrefix);
-            return files;
-        }
-
-        private IEnumerable<(string Name, Stream Content)> GetResourceFiles(string resourcePrefix)
+        private IEnumerable<(string Name, Stream Content)> GetResources(string prefix)
         {
             var assembly = typeof(Program).Assembly;
-            var resourceNames = assembly.GetManifestResourceNames();
+            var resourceNames = assembly.GetManifestResourceNames().Where((n) => n.StartsWith(prefix, StringComparison.InvariantCulture));
 
             foreach (var resourceName in resourceNames)
             {
-                if (resourceName.StartsWith(resourcePrefix))
+                var stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream is not null)
                 {
-                    var stream = assembly.GetManifestResourceStream(resourceName);
-                    if (stream is not null)
-                    {
-                        var name = resourceName.Remove(0, resourcePrefix.Length);
-                        yield return (Name: name, Content: stream);
-                    }
-                }
+                    var name = resourceName.Remove(0, prefix.Length);
+                    yield return (Name: name, Content: stream);
+                } 
             }
         }
 
         private void InitializeCache()
         {
-            if (CacheInitialized == false)
+            if (!_cacheInitialized)
             {
                 lock (_cacheSyncLock)
                 {
-                    if (CacheInitialized == false)
+                    if (!_cacheInitialized)
                     {
                         if (Directory.Exists(CachePath))
                             Directory.Delete(CachePath, recursive: true);
@@ -191,28 +185,26 @@
                         if (Directory.Exists(UserPath))
                         {
                             // If the path exists then we use the templates from this folder instead of using the built-in default templates - this is for testing/debug purpose only
-                            foreach (var assetFile in Directory.EnumerateFiles(UserPath))
+                            foreach (var userFile in Directory.EnumerateFiles(UserPath))
                             {
-                                var assetFileName = Path.GetFileName(assetFile);
-                                var cacheFile = Path.Combine(CachePath, assetFileName);
+                                var userFileName = Path.GetFileName(userFile);
+                                var cacheFile = Path.Combine(CachePath, userFileName);
 
-                                File.Copy(assetFile, cacheFile);
+                                File.Copy(userFile, cacheFile);
                             }
                         }
                         else
                         {
-                            var templateFiles = GetTemplateFiles();
-
-                            foreach (var templateFile in templateFiles)
+                            foreach (var (name, content) in GetTemplates())
                             {
-                                var templateFilePath = Path.Combine(CachePath, templateFile.Name);
+                                var path = Path.Combine(CachePath, name);
+                                using var stream = File.Create(path);
 
-                                using var fileStream = File.Create(templateFilePath);
-                                templateFile.Content.CopyTo(fileStream);
+                                content.CopyTo(stream);
                             }
                         }
 
-                        CacheInitialized = true;
+                        _cacheInitialized = true;
                     }
                 }
             }

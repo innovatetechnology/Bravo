@@ -10,6 +10,7 @@
     using Sqlbi.Bravo.Models.AnalyzeModel;
     using Sqlbi.Bravo.Models.FormatDax;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -102,7 +103,7 @@
                 ServerMode = options.ServerMode.TryParseTo<Dax.Formatter.AnalysisServices.ServerMode>(),
                 ServerLocation = options.ServerLocation.TryParseTo<Dax.Formatter.AnalysisServices.ServerLocation>(),
                 DatabaseName = options.DatabaseName,
-                DatabaseCompatibilityLevel = options.CompatibilityLevel is not null ? options.CompatibilityLevel.ToString() : null, // TODO: Dax.Formatter declare DatabaseCompatibilityLevel int? instead of string
+                DatabaseCompatibilityLevel = options.CompatibilityLevel?.ToString(CultureInfo.InvariantCulture), // TODO: Dax.Formatter declare DatabaseCompatibilityLevel int? instead of string
                 MaxLineLength = options.LineStyle,
                 SkipSpaceAfterFunctionName = options.SpacingStyle,
                 ListSeparator = options.ListSeparator ?? ',', // TODO: Dax.Formatter declare ListSeparator nullable
