@@ -15,7 +15,7 @@ const locale: Locale = {
     strings: {
         [_.addCtrlTitle]: "Åbn",
         [_.aggregatedTableName]: "Flere tabeller",
-        [_.AnalyzeModel]: "Analysér Model",
+        [_.AnalyzeModel]: "Analysér model",
         [_.analyzeModelSummary]: `Dit datasæt er <strong>{size:bytes}</strong> stort og indeholder <strong>{count}</strong> kolonne{{r}}`,
         [_.analyzeModelSummary2]: `, <span class="text-highlight">hvoraf <strong>{count}</strong> ikke refereres noget sted i modellen.</span>`,
         [_.appExtensionName]: "Bravo Template Editor", // DO NOT TRANSLATE
@@ -26,7 +26,7 @@ const locale: Locale = {
         [_.appUpdateViewDetails]: "Vis detaljer",
         [_.appUpToDate]: "Bravo er fuldt opdateret",
         [_.appVersion]: "Version {version}",
-        [_.backupReminder]: "Husk at tage en backup af din rapport inden du fortsætter - <b>ikke alle ændringer kan fortrydes</b>.",
+        [_.backupReminder]: "Husk at tage en backup af din rapport inden du fortsætter – <b>ikke alle ændringer kan fortrydes</b>.",
         [_.BestPractices]: "Bedste praksis",
         [_.canceled]: "Annuleret",
         [_.changeStatusAdded]: "A",
